@@ -1,5 +1,6 @@
 class JourneysController < ApplicationController
-  before_action :set_journey, only: [:show, :update, :destroy]
+  include GoogleMapsDirections
+  before_action :set_journey, only: [:show, :end_journey, :destroy]
 
   # GET /journeys
   def index
@@ -24,9 +25,15 @@ class JourneysController < ApplicationController
     end
   end
 
-  # PATCH/PUT /journeys/1
-  def update
-    if @journey.update(journey_params)
+  # POST /journeys/1/end
+  def end_journey
+    destination = Location.find_by_id(params[:destination_id])
+    return render json: 'No destination found', status: :unprocessable_entity if !destination
+    @journey.destination = destination
+    @journey.end_time = Time.now
+    @journey.google_directions_data = self.fetch_google_directions(@journey.origin, destination)
+
+    if @journey.save
       render json: @journey
     else
       render json: @journey.errors, status: :unprocessable_entity
@@ -46,6 +53,6 @@ class JourneysController < ApplicationController
 
     # Only allow a trusted parameter "white list" through.
     def journey_params
-      params.require(:journey).permit(:origin_id, :destination_id, :end_time)
+      params.require(:journey).permit(:origin_id, :destination_id)
     end
 end
