@@ -4,7 +4,7 @@ class JourneysController < ApplicationController
 
   # GET /journeys
   def index
-    @journeys = Journey.all
+    @journeys = Journey.all.order('created_at DESC')
 
     render json: @journeys
   end
